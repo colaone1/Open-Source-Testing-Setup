@@ -39,73 +39,73 @@ app.use(async (ctx, next) => {
   logger.info(`${ctx.method} ${ctx.url} - ${ms}ms`);
 });
 
-const fetchWeather = async (requestCity) => {
-  try {
-    const endpoint = `${mapURI}/weather?q=${
-      requestCity ? requestCity : targetCity
-    }&appid=${appId}&units=metric`;
-    const response = await fetch(endpoint);
-    
-    if (!response.ok) {
-      throw new Error(`Weather API responded with status: ${response.status}`);
+// Use mock weather API in test or mock mode
+let fetchWeather, fetchWeatherByCoordinates, fetchForecastByCoordinates, fetchForecast;
+if (process.env.NODE_ENV === 'test' || process.env.USE_MOCK_WEATHER === 'true') {
+  const mock = await import('./src/middleware/mockWeatherApi.js');
+  fetchWeather = mock.fetchWeather;
+  fetchWeatherByCoordinates = mock.fetchWeatherByCoordinates;
+  fetchForecastByCoordinates = mock.fetchForecastByCoordinates;
+  fetchForecast = mock.fetchForecast;
+  logger.info('Using mock weather API responses');
+} else {
+  fetchWeather = async (requestCity) => {
+    try {
+      const endpoint = `${mapURI}/weather?q=${
+        requestCity ? requestCity : targetCity
+      }&appid=${appId}&units=metric`;
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        throw new Error(`Weather API responded with status: ${response.status}`);
+      }
+      return response.json();
+    } catch (error) {
+      logger.error('Error fetching weather:', error);
+      throw error;
     }
-    
-    return response.json();
-  } catch (error) {
-    logger.error('Error fetching weather:', error);
-    throw error;
-  }
-};
-
-const fetchWeatherByCoordinates = async (lon, lat) => {
-  try {
-    const endpoint = `${mapURI}/weather?lat=${lat}&lon=${lon}&appid=${appId}&units=metric`;
-    const response = await fetch(endpoint);
-    
-    if (!response.ok) {
-      throw new Error(`Weather API responded with status: ${response.status}`);
+  };
+  fetchWeatherByCoordinates = async (lon, lat) => {
+    try {
+      const endpoint = `${mapURI}/weather?lat=${lat}&lon=${lon}&appid=${appId}&units=metric`;
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        throw new Error(`Weather API responded with status: ${response.status}`);
+      }
+      return response.json();
+    } catch (error) {
+      logger.error('Error fetching weather by coordinates:', error);
+      throw error;
     }
-    
-    return response.json();
-  } catch (error) {
-    logger.error('Error fetching weather by coordinates:', error);
-    throw error;
-  }
-};
-
-const fetchForecastByCoordinates = async (lon, lat) => {
-  try {
-    const endpoint = `${mapURI}/forecast?lat=${lat}&lon=${lon}&appid=${appId}&units=metric`;
-    const response = await fetch(endpoint);
-    
-    if (!response.ok) {
-      throw new Error(`Forecast API responded with status: ${response.status}`);
+  };
+  fetchForecastByCoordinates = async (lon, lat) => {
+    try {
+      const endpoint = `${mapURI}/forecast?lat=${lat}&lon=${lon}&appid=${appId}&units=metric`;
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        throw new Error(`Forecast API responded with status: ${response.status}`);
+      }
+      return response.json();
+    } catch (error) {
+      logger.error('Error fetching forecast by coordinates:', error);
+      throw error;
     }
-    
-    return response.json();
-  } catch (error) {
-    logger.error('Error fetching forecast by coordinates:', error);
-    throw error;
-  }
-};
-
-const fetchForecast = async (requestCity) => {
-  try {
-    const endpoint = `${mapURI}/forecast?q=${
-      requestCity ? requestCity : targetCity
-    }&appid=${appId}&cnt=3&units=metric`;
-    const response = await fetch(endpoint);
-    
-    if (!response.ok) {
-      throw new Error(`Forecast API responded with status: ${response.status}`);
+  };
+  fetchForecast = async (requestCity) => {
+    try {
+      const endpoint = `${mapURI}/forecast?q=${
+        requestCity ? requestCity : targetCity
+      }&appid=${appId}&cnt=3&units=metric`;
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        throw new Error(`Forecast API responded with status: ${response.status}`);
+      }
+      return response.json();
+    } catch (error) {
+      logger.error('Error fetching forecast:', error);
+      throw error;
     }
-    
-    return response.json();
-  } catch (error) {
-    logger.error('Error fetching forecast:', error);
-    throw error;
-  }
-};
+  };
+}
 
 // Routes
 router.get('/api/weatherbycity', async (ctx) => {
